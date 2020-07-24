@@ -13,11 +13,12 @@ from models.models import Db, User, Post
 from forms.forms import SignupForm, LoginForm, NewpostForm
 from os import environ
 from passlib.hash import sha256_crypt
+from datetime import datetime
 
 load_dotenv(".env")
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://localhost/lab5"
+app.config["SQLALCHEMY_DATABASE_URI"] = environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = environ.get("SECRET_KEY")
 Db.init_app(app)
@@ -31,7 +32,6 @@ def index():
     if "username" in session:
         session_user = User.query.filter_by(username=session["username"]).first()
         posts = Post.query.filter_by(author=session_user.uid).all()
-        print(posts[0].created_at)
         return render_template(
             "index.html",
             title="Home",
@@ -98,7 +98,9 @@ def newpost():
         content = request.form["content"]
 
         # Create in DB
-        new_post = Post(author=session_user.uid, content=content)
+        new_post = Post(
+            author=session_user.uid, content=content, created_at=datetime.now()
+        )
         Db.session.add(new_post)
         Db.session.commit()
 
